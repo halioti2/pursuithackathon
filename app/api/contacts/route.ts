@@ -15,7 +15,7 @@ export async function GET() {
     }
 
     const contacts = await getContacts(supabase);
-    return NextResponse.json({ contacts });
+    return NextResponse.json(contacts);
   } catch (error) {
     console.error('Error in GET /api/contacts:', error);
     return NextResponse.json(
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     };
 
     const contact = await createContact(supabase, contactData);
-    return NextResponse.json({ contact }, { status: 201 });
+    return NextResponse.json(contact, { status: 201 });
   } catch (error) {
     console.error('Error in POST /api/contacts:', error);
     return NextResponse.json(
