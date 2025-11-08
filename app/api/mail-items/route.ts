@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const contactId = searchParams.get('contact_id');
 
     const mailItems = await getMailItems(supabase, contactId || undefined);
-    return NextResponse.json({ mailItems });
+    return NextResponse.json(mailItems);
   } catch (error) {
     console.error('Error in GET /api/mail-items:', error);
     return NextResponse.json(
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     const mailItem = await createMailItem(supabase, mailItemData);
-    return NextResponse.json({ mailItem }, { status: 201 });
+    return NextResponse.json(mailItem, { status: 201 });
   } catch (error) {
     console.error('Error in POST /api/mail-items:', error);
     return NextResponse.json(
