@@ -20,7 +20,9 @@ export default function MailItemsPage() {
       const response = await fetch('/api/mail-items');
       if (response.ok) {
         const data = await response.json();
-        setMailItems(Array.isArray(data) ? data : []);
+        // Handle both { mailItems: [...] } and [...] formats
+        const items = data.mailItems || data;
+        setMailItems(Array.isArray(items) ? items : []);
       }
     } catch (err) {
       console.error('Error loading mail items:', err);
