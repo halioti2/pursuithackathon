@@ -51,20 +51,20 @@ ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 -- This is our simplified CRM schema, now integrated with the
 -- users table for proper data security and ownership.
 
--- TABLE 1: contacts
+-- TABLE 1: contacts (aligned with Mei Way Mail Plus spreadsheet)
 CREATE TABLE IF NOT EXISTS contacts (
     contact_id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id             UUID REFERENCES public.users(id) ON DELETE CASCADE, -- **CRITICAL LINK** to the user who owns this contact
-    contact_name        TEXT NOT NULL,
     company_name        TEXT,
+    unit_number         TEXT,  -- Mailbox/Unit identifier (e.g., F14-F15, F17, C8)
+    contact_person      TEXT,  -- Primary contact name
+    language_preference TEXT,  -- e.g., English, Mandarin, English/Mandarin
     email               TEXT,
     phone_number        TEXT,
-    address_line_1      TEXT NOT NULL,
-    address_line_2      TEXT,
-    city                TEXT NOT NULL,
-    state_province_region TEXT NOT NULL,
-    postal_code         TEXT NOT NULL,
-    country             TEXT NOT NULL,
+    service_tier        INTEGER, -- 1, 2, etc.
+    options             TEXT,  -- Special notes like "*High Volume"
+    mailbox_number      TEXT,  -- Physical mailbox assignment (e.g., D1, D2, D3)
+    status              TEXT DEFAULT 'PENDING', -- Active, PENDING, No
     created_at          TIMESTAMPTZ DEFAULT NOW()
 );
 -- Enable Row Level Security
@@ -75,36 +75,63 @@ CREATE POLICY "Users can manage their own contacts." ON contacts
     FOR ALL USING (auth.uid() = user_id);
 
 
--- TABLE 2: jobs
-CREATE TABLE IF NOT EXISTS jobs (
-    job_id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+-- TABLE 2: mail_items (formerly jobs - tracks individual mail/packages)
+CREATE TABLE IF NOT EXISTS mail_items (
+    mail_item_id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     contact_id          UUID REFERENCES public.contacts(contact_id) ON DELETE CASCADE,
-    -- We can also add a user_id here for easier querying, though it's not strictly necessary
-    -- as we can infer the owner through the contact_id.
-    job_title           TEXT NOT NULL,
-    status              TEXT DEFAULT 'Active',
+    item_type           TEXT DEFAULT 'Package', -- Package, Letter, Certified Mail, etc.
+    description         TEXT, -- Brief note about the item
+    received_date       TIMESTAMPTZ DEFAULT NOW(),
+    status              TEXT DEFAULT 'Received', -- Received, Notified, Picked Up, Returned
+    pickup_date         TIMESTAMPTZ,
     created_at          TIMESTAMPTZ DEFAULT NOW()
 );
 -- Enable Row Level Security
-ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
--- Add Policy: Users can only manage jobs belonging to contacts they own.
-DROP POLICY IF EXISTS "Users can manage jobs for their contacts." ON jobs;
-CREATE POLICY "Users can manage jobs for their contacts." ON jobs
-    FOR ALL USING (auth.uid() = (SELECT user_id FROM contacts WHERE contacts.contact_id = jobs.contact_id));
+ALTER TABLE mail_items ENABLE ROW LEVEL SECURITY;
+-- Add Policy: Users can only manage mail items belonging to contacts they own.
+DROP POLICY IF EXISTS "Users can manage mail items for their contacts." ON mail_items;
+CREATE POLICY "Users can manage mail items for their contacts." ON mail_items
+    FOR ALL USING (auth.uid() = (SELECT user_id FROM contacts WHERE contacts.contact_id = mail_items.contact_id));
 
 
--- TABLE 3: reach_outs
-CREATE TABLE IF NOT EXISTS reach_outs (
-    reach_out_id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    job_id              UUID REFERENCES public.jobs(job_id) ON DELETE CASCADE,
-    method              TEXT,
+-- TABLE 3: outreach_messages (formerly reach_outs - tracks all communications)
+CREATE TABLE IF NOT EXISTS outreach_messages (
+    message_id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    mail_item_id        UUID REFERENCES public.mail_items(mail_item_id) ON DELETE CASCADE,
+    contact_id          UUID REFERENCES public.contacts(contact_id) ON DELETE CASCADE,
+    message_type        TEXT, -- Initial Notification, Reminder, Pickup Confirmed
+    channel             TEXT, -- Email, SMS, WeChat, Phone
+    message_content     TEXT, -- The actual message sent
+    sent_at             TIMESTAMPTZ DEFAULT NOW(),
     responded           BOOLEAN NOT NULL DEFAULT FALSE,
-    notes               TEXT,
-    timestamp           TIMESTAMPTZ DEFAULT NOW()
+    response_date       TIMESTAMPTZ,
+    follow_up_needed    BOOLEAN DEFAULT TRUE,
+    follow_up_date      TIMESTAMPTZ, -- Auto-set to 24-48h after sent_at
+    notes               TEXT
 );
 -- Enable Row Level Security
-ALTER TABLE reach_outs ENABLE ROW LEVEL SECURITY;
--- Add Policy: Users can only manage reach_outs for jobs they own.
-DROP POLICY IF EXISTS "Users can manage reach_outs for their jobs." ON reach_outs;
-CREATE POLICY "Users can manage reach_outs for their jobs." ON reach_outs
-    FOR ALL USING (auth.uid() = (SELECT contacts.user_id FROM contacts JOIN jobs ON contacts.contact_id = jobs.contact_id WHERE jobs.job_id = reach_outs.job_id));
+ALTER TABLE outreach_messages ENABLE ROW LEVEL SECURITY;
+-- Add Policy: Users can only manage outreach messages for their contacts.
+DROP POLICY IF EXISTS "Users can manage outreach for their contacts." ON outreach_messages;
+CREATE POLICY "Users can manage outreach for their contacts." ON outreach_messages
+    FOR ALL USING (auth.uid() = (SELECT contacts.user_id FROM contacts WHERE contacts.contact_id = outreach_messages.contact_id));
+
+
+-- TABLE 4: message_templates (predefined message templates for quick sending)
+CREATE TABLE IF NOT EXISTS message_templates (
+    template_id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id             UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    template_name       TEXT NOT NULL, -- e.g., "Mail Received", "Pickup Reminder", "Pickup Confirmed"
+    template_type       TEXT NOT NULL, -- Initial, Reminder, Confirmation, Custom
+    subject_line        TEXT, -- For emails
+    message_body        TEXT NOT NULL, -- Can include {{variables}} like {{contact_name}}, {{item_type}}
+    default_channel     TEXT DEFAULT 'Email', -- Email, SMS, Both
+    is_default          BOOLEAN DEFAULT FALSE, -- System default templates
+    created_at          TIMESTAMPTZ DEFAULT NOW()
+);
+-- Enable Row Level Security
+ALTER TABLE message_templates ENABLE ROW LEVEL SECURITY;
+-- Add Policy: Users can manage their own templates and see default templates.
+DROP POLICY IF EXISTS "Users can manage their templates." ON message_templates;
+CREATE POLICY "Users can manage their templates." ON message_templates
+    FOR ALL USING (auth.uid() = user_id OR is_default = TRUE);
