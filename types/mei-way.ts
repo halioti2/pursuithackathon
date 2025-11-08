@@ -26,6 +26,14 @@ export interface MailItem {
   status: 'Received' | 'Notified' | 'Picked Up' | 'Returned';
   pickup_date?: string;
   created_at: string;
+  // Joined contact information
+  contact?: {
+    contact_id: string;
+    contact_person: string;
+    company_name?: string;
+    email?: string;
+    phone_number?: string;
+  };
 }
 
 export interface OutreachMessage {

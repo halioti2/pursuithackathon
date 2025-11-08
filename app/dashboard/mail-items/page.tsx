@@ -135,7 +135,7 @@ export default function MailItemsPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-lg font-semibold text-white">
-                        {item.contacts?.contact_person || item.contacts?.company_name || 'Unknown Contact'}
+                        {item.contact?.contact_person || item.contact?.company_name || 'Unknown Contact'}
                       </h3>
                       <StatusBadge status={item.status} />
                     </div>
@@ -143,14 +143,14 @@ export default function MailItemsPage() {
                       <span className="flex items-center gap-1">
                         📦 {item.item_type}
                       </span>
-                      {item.contacts?.unit_number && (
+                      {item.contact?.unit_number && (
                         <span className="flex items-center gap-1">
-                          🏢 Unit {item.contacts.unit_number}
+                          🏢 Unit {item.contact.unit_number}
                         </span>
                       )}
-                      {item.contacts?.mailbox_number && (
+                      {item.contact?.mailbox_number && (
                         <span className="flex items-center gap-1">
-                          📮 Mailbox {item.contacts.mailbox_number}
+                          📮 Mailbox {item.contact.mailbox_number}
                         </span>
                       )}
                     </div>

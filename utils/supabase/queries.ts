@@ -159,7 +159,16 @@ export async function updateContact(supabase: any, contactId: string, data: Part
 export const getMailItems = cache(async (supabase: any, contactId?: string): Promise<MailItem[]> => {
   let query = supabase
     .from('mail_items')
-    .select('*')
+    .select(`
+      *,
+      contact:contacts(
+        contact_id,
+        contact_person,
+        company_name,
+        email,
+        phone_number
+      )
+    `)
     .order('received_date', { ascending: false });
 
   if (contactId) {
@@ -179,7 +188,16 @@ export const getMailItems = cache(async (supabase: any, contactId?: string): Pro
 export const getActiveMailItems = cache(async (supabase: any): Promise<MailItem[]> => {
   const { data, error } = await supabase
     .from('mail_items')
-    .select('*')
+    .select(`
+      *,
+      contact:contacts(
+        contact_id,
+        contact_person,
+        company_name,
+        email,
+        phone_number
+      )
+    `)
     .in('status', ['Received', 'Notified'])
     .order('received_date', { ascending: false });
 
