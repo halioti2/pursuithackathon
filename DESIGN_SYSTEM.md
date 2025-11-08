@@ -394,7 +394,7 @@ export default function Modal({ isOpen, onClose, title, children }: Props) {
 **Location:** `components/ui/Toasts/toast.tsx`
 
 ```tsx
-import { toast } from '@/components/ui/Toasts/toast';
+import { toast } from '@/components/ui/Toasts/use-toast';
 
 // Success
 toast({

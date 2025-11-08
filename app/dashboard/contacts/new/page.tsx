@@ -3,7 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
-import { toast } from '@/components/ui/Toasts/toast';
+import { toast } from '@/components/ui/Toasts/use-toast';
 
 export default function NewContactPage() {
   const router = useRouter();
