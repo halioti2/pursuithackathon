@@ -9,7 +9,8 @@
 -- ##############################################################
 
 -- Insert default message templates (system-wide)
-INSERT INTO message_templates (template_name, template_type, subject_line, message_body, default_channel, is_default) VALUES
+-- Note: user_id defaults to NULL for system templates, default_channel defaults to 'Email'
+INSERT INTO message_templates (template_name, template_type, subject_line, message_body, is_default) VALUES
 ('Mail Received Notification', 'Initial', 'New Mail Received at Mei Way Mail Plus', 
 'Hi {{contact_name}}, 
 
@@ -22,7 +23,7 @@ You have received a {{item_type}} at Mei Way Mail Plus. Your mail is ready for p
 Please come by at your earliest convenience to collect your mail.
 
 Thank you!
-Mei Way Mail Plus Team', 'Email', TRUE),
+Mei Way Mail Plus Team', TRUE),
 
 ('Pickup Reminder', 'Reminder', 'Reminder: Mail Waiting for Pickup', 
 'Hi {{contact_name}},
@@ -36,7 +37,7 @@ It has been waiting since {{received_date}}. Please collect it at your earliest 
 📞 Contact: (555) 123-4567
 
 Thank you!
-Mei Way Mail Plus Team', 'Email', TRUE),
+Mei Way Mail Plus Team', TRUE),
 
 ('Pickup Confirmed', 'Confirmation', 'Mail Pickup Confirmed - Thank You!', 
 'Hi {{contact_name}},
@@ -49,7 +50,7 @@ We hope to continue serving your mail forwarding needs. If you have any question
 📧 Email: info@meiwaymailplus.com
 
 Have a great day!
-Mei Way Mail Plus Team', 'Email', TRUE),
+Mei Way Mail Plus Team', TRUE),
 
 ('High Volume Notice', 'Initial', 'Multiple Items Received', 
 'Hi {{contact_name}},
@@ -64,39 +65,49 @@ Due to the volume, please allow extra time when picking up your mail.
 📞 Contact: (555) 123-4567
 
 Thank you for your patience!
-Mei Way Mail Plus Team', 'Email', TRUE);
+Mei Way Mail Plus Team', TRUE);
 
 -- ##############################################################
--- ##                2. SAMPLE CONTACTS                      ##
+-- ##                2. ENSURE USER PROFILE EXISTS           ##
 -- ##############################################################
 
--- Note: Replace 'your-user-id-here' with an actual user ID from your auth.users table
--- You can get this by running: SELECT id FROM auth.users LIMIT 1;
+-- Create a user profile if it doesn't exist (in case the trigger didn't run)
+INSERT INTO users (id, full_name, avatar_url, billing_address, payment_method)
+SELECT id, 'Mei Way Admin', NULL, NULL, NULL 
+FROM auth.users 
+WHERE id NOT IN (SELECT id FROM users)
+LIMIT 1
+ON CONFLICT (id) DO NOTHING;
+
+-- ##############################################################
+-- ##                3. SAMPLE CONTACTS                      ##
+-- ##############################################################
 
 -- Sample contacts based on typical Mei Way customers
+-- Using subquery to automatically get the first user ID from auth.users
 INSERT INTO contacts (user_id, company_name, unit_number, contact_person, language_preference, email, phone_number, service_tier, options, mailbox_number, status) VALUES
 
 -- Active customers
-('your-user-id-here', 'Zhang Import/Export LLC', 'F14-F15', 'David Zhang', 'English/Mandarin', 'dzhang@zhangimport.com', '(555) 201-3456', 2, 'High Volume', 'D1', 'Active'),
+((SELECT id FROM auth.users LIMIT 1), 'Zhang Import/Export LLC', 'F14-F15', 'David Zhang', 'English/Mandarin', 'dzhang@zhangimport.com', '(555) 201-3456', 2, 'High Volume', 'D1', 'Active'),
 
-('your-user-id-here', 'Golden Dragon Restaurant', 'F17', 'Lisa Wong', 'English/Mandarin', 'lwong@goldendragon.com', '(555) 201-7890', 1, NULL, 'D2', 'Active'),
+((SELECT id FROM auth.users LIMIT 1), 'Golden Dragon Restaurant', 'F17', 'Lisa Wong', 'English/Mandarin', 'lwong@goldendragon.com', '(555) 201-7890', 1, NULL, 'D2', 'Active'),
 
-('your-user-id-here', 'Pacific Tech Solutions', 'C8', 'Fred Fu', 'English', 'fred.fu@pacifictech.com', '(555) 201-2345', 2, NULL, 'D3', 'Active'),
+((SELECT id FROM auth.users LIMIT 1), 'Pacific Tech Solutions', 'C8', 'Fred Fu', 'English', 'fred.fu@pacifictech.com', '(555) 201-2345', 2, NULL, 'D3', 'Active'),
 
-('your-user-id-here', 'Jade Jewelry Co.', 'B12', 'Angela Chen', 'Mandarin', 'achen@jadejewelry.com', '(555) 201-6789', 1, NULL, 'D4', 'Active'),
+((SELECT id FROM auth.users LIMIT 1), 'Jade Jewelry Co.', 'B12', 'Angela Chen', 'Mandarin', 'achen@jadejewelry.com', '(555) 201-6789', 1, NULL, 'D4', 'Active'),
 
-('your-user-id-here', 'Rising Sun Trading', 'A5-A6', 'Benjamin Wong', 'English/Mandarin', 'bwong@risingsun.com', '(555) 201-4567', 3, 'High Volume', 'D5', 'Active'),
+((SELECT id FROM auth.users LIMIT 1), 'Rising Sun Trading', 'A5-A6', 'Benjamin Wong', 'English/Mandarin', 'bwong@risingsun.com', '(555) 201-4567', 3, 'High Volume', 'D5', 'Active'),
 
 -- Pending customers
-('your-user-id-here', 'New Horizon Consulting', 'E20', 'Sarah Kim', 'English', 'skim@newhorizon.com', '(555) 201-8901', 1, NULL, 'D6', 'PENDING'),
+((SELECT id FROM auth.users LIMIT 1), 'New Horizon Consulting', 'E20', 'Sarah Kim', 'English', 'skim@newhorizon.com', '(555) 201-8901', 1, NULL, 'D6', 'PENDING'),
 
-('your-user-id-here', 'Dynasty Imports', 'G3', 'Michael Liu', 'English/Mandarin', 'mliu@dynastyimports.com', '(555) 201-5678', 2, NULL, 'D7', 'PENDING'),
+((SELECT id FROM auth.users LIMIT 1), 'Dynasty Imports', 'G3', 'Michael Liu', 'English/Mandarin', 'mliu@dynastyimports.com', '(555) 201-5678', 2, NULL, 'D7', 'PENDING'),
 
 -- Inactive customer
-('your-user-id-here', 'Sunset Electronics', 'H15', 'Jenny Tan', 'English', 'jtan@sunsetelec.com', '(555) 201-9012', 1, 'Former customer', 'D8', 'No');
+((SELECT id FROM auth.users LIMIT 1), 'Sunset Electronics', 'H15', 'Jenny Tan', 'English', 'jtan@sunsetelec.com', '(555) 201-9012', 1, 'Former customer', 'D8', 'No');
 
 -- ##############################################################
--- ##                3. SAMPLE MAIL ITEMS                    ##
+-- ##                4. SAMPLE MAIL ITEMS                    ##
 -- ##############################################################
 
 -- Sample mail items for testing (using contact_ids from above)
@@ -128,7 +139,7 @@ INSERT INTO mail_items (contact_id, item_type, description, status, received_dat
 ((SELECT contact_id FROM contacts WHERE contact_person = 'Benjamin Wong' LIMIT 1), 'Certified Mail', 'Government correspondence', 'Received', NOW() - INTERVAL '5 hours');
 
 -- ##############################################################
--- ##              4. SAMPLE OUTREACH MESSAGES               ##
+-- ##              5. SAMPLE OUTREACH MESSAGES               ##
 -- ##############################################################
 
 -- Sample outreach messages showing communication history
@@ -163,7 +174,7 @@ INSERT INTO outreach_messages (contact_id, mail_item_id, message_type, channel, 
  FALSE, NOW() + INTERVAL '24 hours', 'Sent bilingual message via WeChat');
 
 -- ##############################################################
--- ##                5. VERIFICATION QUERIES                 ##
+-- ##                6. VERIFICATION QUERIES                 ##
 -- ##############################################################
 
 -- Run these queries to verify your data loaded correctly:
@@ -196,8 +207,8 @@ INSERT INTO outreach_messages (contact_id, mail_item_id, message_type, channel, 
 -- ##                     USAGE NOTES                        ##
 -- ##############################################################
 
--- 1. IMPORTANT: Replace 'your-user-id-here' with an actual user ID from auth.users
---    Get it by running: SELECT id FROM auth.users LIMIT 1;
+-- 1. AUTOMATIC USER ID: The sample data automatically uses the first user from auth.users
+--    No need to manually replace any user IDs - it will work out of the box!
 --    
 -- 2. This sample data creates a realistic scenario:
 --    - 8 contacts (6 active, 2 pending, 1 inactive)
