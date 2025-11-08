@@ -129,7 +129,7 @@ export default function ContactDetailPage() {
             </div>
           </div>
           <div className="flex gap-3">
-            <Button variant="slim" onClick={() => alert('Send message feature coming soon!')}>
+            <Button variant="slim" onClick={() => router.push(`/dashboard/contacts/${contactId}/message`)}>
               📧 Send Message
             </Button>
             <Button variant="slim" onClick={() => router.push(`/dashboard/contacts/${contactId}/edit`)}>

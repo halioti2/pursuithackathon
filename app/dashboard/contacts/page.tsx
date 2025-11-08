@@ -195,7 +195,7 @@ export default function ContactsPage() {
                       </button>
                       <button 
                         className="text-green-400 hover:text-green-300 transition-colors"
-                        onClick={() => alert('Send message feature coming soon!')}
+                        onClick={() => router.push(`/dashboard/contacts/${contact.contact_id}/message`)}
                       >
                         Message
                       </button>
