@@ -25,21 +25,15 @@ export default function Navlinks({ user }: NavlinksProps) {
           <Link href="/design-system" className={s.link}>
             🎨 Design System
           </Link>
-          {user ? (
-            <>
-              <Link href="/dashboard" className={s.link}>
-                Dashboard
-              </Link>
-              <Link href="/dashboard/contacts" className={s.link}>
-                Contacts
-              </Link>
-              <Link href="/account" className={s.link}>
-                Account
-              </Link>
-            </>
-          ) : (
-            <Link href="/" className={s.link}>
-              Home
+          <Link href="/dashboard" className={s.link}>
+            Dashboard
+          </Link>
+          <Link href="/dashboard/contacts" className={s.link}>
+            Contacts
+          </Link>
+          {user && (
+            <Link href="/account" className={s.link}>
+              Account
             </Link>
           )}
         </nav>
