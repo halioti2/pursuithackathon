@@ -3,7 +3,6 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
-import { toast } from '@/components/ui/Toasts/use-toast';
 
 export default function NewContactPage() {
   const router = useRouter();
@@ -33,25 +32,14 @@ export default function NewContactPage() {
       });
 
       if (response.ok) {
-        toast({
-          title: 'Success!',
-          description: 'Contact created successfully'
-        });
+        alert('Contact created successfully!');
         router.push('/dashboard/contacts');
       } else {
         const error = await response.text();
-        toast({
-          title: 'Error',
-          description: `Failed to create contact: ${error}`,
-          variant: 'destructive'
-        });
+        alert(`Failed to create contact: ${error}`);
       }
     } catch (err) {
-      toast({
-        title: 'Error',
-        description: 'Failed to create contact. Please try again.',
-        variant: 'destructive'
-      });
+      alert('Failed to create contact. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -257,7 +245,6 @@ export default function NewContactPage() {
           <Button
             variant="flat"
             type="submit"
-            loading={loading}
             disabled={loading}
           >
             {loading ? 'Creating...' : 'Create Contact'}
