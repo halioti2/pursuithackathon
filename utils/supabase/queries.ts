@@ -375,10 +375,17 @@ export const getDashboardStats = cache(async (supabase: any): Promise<DashboardS
       .eq('responded', false)
       .lt('follow_up_date', now);
 
-    // Get recent mail items (last 10)
+    // Get recent mail items (last 10) with contact information
     const { data: recentMailItems } = await supabase
       .from('mail_items')
-      .select('*')
+      .select(`
+        *,
+        contact:contacts (
+          contact_id,
+          contact_person,
+          company_name
+        )
+      `)
       .order('received_date', { ascending: false })
       .limit(10);
 
@@ -393,11 +400,11 @@ export const getDashboardStats = cache(async (supabase: any): Promise<DashboardS
       .limit(5);
 
     return {
-      total_contacts: totalContacts || 0,
-      active_mail_items: activeMailItems || 0,
-      pending_followups: pendingFollowups || 0,
-      recent_mail_items: recentMailItems || [],
-      overdue_followups: overdueFollowups || []
+      totalContacts: totalContacts || 0,
+      activeMailItems: activeMailItems || 0,
+      pendingFollowUps: pendingFollowups || 0,
+      recentMailItems: recentMailItems || [],
+      overdueFollowups: overdueFollowups || []
     };
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);

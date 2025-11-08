@@ -14,7 +14,7 @@ export async function GET() {
     }
 
     const stats = await getDashboardStats(supabase);
-    return NextResponse.json({ stats });
+    return NextResponse.json(stats);
   } catch (error) {
     console.error('Error in GET /api/dashboard/stats:', error);
     return NextResponse.json(
