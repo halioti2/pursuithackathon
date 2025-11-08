@@ -42,7 +42,75 @@ CREATE TABLE IF NOT EXISTS customers (
   stripe_customer_id text
 );
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
--- (The rest of the boilerplate schema for products, prices, etc., is also fine to include)
+
+-- Add the rest of the boilerplate schema for products, prices, etc.
+DO $$ BEGIN
+    CREATE TYPE pricing_type AS ENUM ('one_time', 'recurring');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE pricing_plan_interval AS ENUM ('day', 'week', 'month', 'year');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+CREATE TABLE IF NOT EXISTS products (
+  id text primary key,
+  active boolean,
+  name text,
+  description text,
+  image text,
+  metadata jsonb
+);
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow public read-only access." ON products;
+CREATE POLICY "Allow public read-only access." ON products FOR SELECT USING (true);
+
+CREATE TABLE IF NOT EXISTS prices (
+  id text primary key,
+  product_id text references products, 
+  active boolean,
+  description text,
+  unit_amount bigint,
+  currency text check (char_length(currency) = 3),
+  type pricing_type,
+  interval pricing_plan_interval,
+  interval_count integer,
+  trial_period_days integer,
+  metadata jsonb
+);
+ALTER TABLE prices ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow public read-only access." ON prices;
+CREATE POLICY "Allow public read-only access." ON prices FOR SELECT USING (true);
+
+DO $$ BEGIN
+    CREATE TYPE subscription_status AS ENUM ('trialing', 'active', 'canceled', 'incomplete', 'incomplete_expired', 'past_due', 'unpaid', 'paused');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id text primary key,
+  user_id uuid references auth.users not null,
+  status subscription_status,
+  metadata jsonb,
+  price_id text references prices,
+  quantity integer,
+  cancel_at_period_end boolean,
+  created timestamp with time zone default timezone('utc'::text, now()) not null,
+  current_period_start timestamp with time zone default timezone('utc'::text, now()) not null,
+  current_period_end timestamp with time zone default timezone('utc'::text, now()) not null,
+  ended_at timestamp with time zone default timezone('utc'::text, now()),
+  cancel_at timestamp with time zone default timezone('utc'::text, now()),
+  canceled_at timestamp with time zone default timezone('utc'::text, now()),
+  trial_start timestamp with time zone default timezone('utc'::text, now()),
+  trial_end timestamp with time zone default timezone('utc'::text, now())
+);
+ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Can only view own subs data." ON subscriptions;
+CREATE POLICY "Can only view own subs data." ON subscriptions FOR SELECT USING (auth.uid() = user_id);
 
 
 -- ##############################################################
@@ -135,3 +203,7 @@ ALTER TABLE message_templates ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can manage their templates." ON message_templates;
 CREATE POLICY "Users can manage their templates." ON message_templates
     FOR ALL USING (auth.uid() = user_id OR is_default = TRUE);
+
+-- Create publication for realtime subscriptions (including CRM tables)
+DROP PUBLICATION IF EXISTS supabase_realtime;
+CREATE PUBLICATION supabase_realtime FOR TABLE products, prices, contacts, mail_items, outreach_messages, message_templates;
