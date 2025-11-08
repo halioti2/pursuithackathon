@@ -97,11 +97,11 @@ export interface CreateMessageTemplateData {
 
 // Dashboard statistics
 export interface DashboardStats {
-  total_contacts: number;
-  active_mail_items: number;
-  pending_followups: number;
-  recent_mail_items: MailItem[];
-  overdue_followups: OutreachMessage[];
+  totalContacts: number;
+  activeMailItems: number;
+  pendingFollowUps: number;
+  recentMailItems: MailItem[];
+  overdueFollowups: OutreachMessage[];
 }
 
 // Contact with related data (for detail view)
