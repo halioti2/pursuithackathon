@@ -3,7 +3,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
-import { toast } from '@/components/ui/Toasts/toast';
+import { toast } from '@/components/ui/Toasts/use-toast';
 import type { Contact } from '@/types/mei-way';
 
 export default function NewMailItemPage() {
