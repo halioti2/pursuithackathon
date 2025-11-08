@@ -63,131 +63,47 @@ The schema has been updated to match Mei Way's spreadsheet structure:
 
 ### Backend Dev Task Breakdown:
 
-#### Task 1: Database Migration (5 min)
-**Files to modify:** Already done in `schema.sql`
-- [x] Updated schema with all 4 tables
-- [ ] Run migration in Supabase dashboard or local instance
-  ```bash
-  # If using local Supabase:
-  pnpm supabase:reset
-  ```
+#### ✅ Task 1: Database Migration (COMPLETE)
+**Files completed:** `simple_reset_rebuild.sql`
+- [x] Updated schema with all 4 tables + foundation tables
+- [x] Run migration in Supabase dashboard
+- [x] Database ready and tested
 
-#### Task 2: TypeScript Types (5 min)
-**File to create:** `types/mei-way.ts`
-```typescript
-export interface Contact {
-  contact_id: string;
-  user_id: string;
-  company_name?: string;
-  unit_number?: string;
-  contact_person?: string;
-  language_preference?: string;
-  email?: string;
-  phone_number?: string;
-  service_tier?: number;
-  options?: string;
-  mailbox_number?: string;
-  status: 'Active' | 'PENDING' | 'No';
-  created_at: string;
-}
+#### ✅ Task 2: TypeScript Types (COMPLETE)
+**File created:** `types/mei-way.ts`
+- [x] Complete type definitions for all CRM entities
+- [x] Form data types and dashboard statistics types
 
-export interface MailItem {
-  mail_item_id: string;
-  contact_id: string;
-  item_type: string;
-  description?: string;
-  received_date: string;
-  status: 'Received' | 'Notified' | 'Picked Up' | 'Returned';
-  pickup_date?: string;
-  created_at: string;
-}
+#### ✅ Task 3: Supabase Query Functions (COMPLETE)
+**File completed:** `utils/supabase/queries.ts`
+- [x] 15+ comprehensive query functions implemented:
+  - Contact management: `getContacts`, `createContact`, `updateContact`, `getContactWithDetails`
+  - Mail items: `getMailItems`, `createMailItem`, `updateMailItemStatus`, `getActiveMailItems`
+  - Messages: `getOutreachMessages`, `createOutreachMessage`, `markMessageResponded`, `getPendingFollowups`
+  - Templates: `getMessageTemplates`, `getDefaultTemplates`
+  - Dashboard: `getDashboardStats`
 
-export interface OutreachMessage {
-  message_id: string;
-  mail_item_id?: string;
-  contact_id: string;
-  message_type: string;
-  channel: 'Email' | 'SMS' | 'WeChat' | 'Phone';
-  message_content: string;
-  sent_at: string;
-  responded: boolean;
-  response_date?: string;
-  follow_up_needed: boolean;
-  follow_up_date?: string;
-  notes?: string;
-}
+#### ✅ Task 4: API Routes (COMPLETE)
+**Files created:** All 7 API endpoints implemented
+- [x] `app/api/contacts/route.ts` - GET all, POST new
+- [x] `app/api/contacts/[id]/route.ts` - GET, PUT, DELETE one
+- [x] `app/api/mail-items/route.ts` - GET all, POST new
+- [x] `app/api/mail-items/[id]/route.ts` - PUT status
+- [x] `app/api/messages/route.ts` - GET all, POST send message
+- [x] `app/api/templates/route.ts` - GET templates
+- [x] `app/api/dashboard/stats/route.ts` - GET dashboard statistics
 
-export interface MessageTemplate {
-  template_id: string;
-  user_id: string;
-  template_name: string;
-  template_type: 'Initial' | 'Reminder' | 'Confirmation' | 'Custom';
-  subject_line?: string;
-  message_body: string;
-  default_channel: 'Email' | 'SMS' | 'Both';
-  is_default: boolean;
-  created_at: string;
-}
-```
+**API endpoints ready:**
+- `GET/POST /api/contacts` - Contact CRUD
+- `GET/PUT/DELETE /api/contacts/[id]` - Individual contact operations
+- `GET/POST /api/mail-items` - Mail item management
+- `PUT /api/mail-items/[id]` - Update mail status
+- `GET/POST /api/messages` - Message management
+- `GET /api/templates` - Template retrieval
+- `GET /api/dashboard/stats` - Dashboard data
 
-#### Task 3: Supabase Query Functions (10 min)
-**File to modify:** `utils/supabase/queries.ts`
-
-Add these query functions:
-```typescript
-// Contacts
-export async function getContacts(supabase: SupabaseClient)
-export async function getContactById(supabase: SupabaseClient, contactId: string)
-export async function createContact(supabase: SupabaseClient, data: Partial<Contact>)
-export async function updateContact(supabase: SupabaseClient, contactId: string, data: Partial<Contact>)
-
-// Mail Items
-export async function getMailItems(supabase: SupabaseClient, contactId?: string)
-export async function createMailItem(supabase: SupabaseClient, data: Partial<MailItem>)
-export async function updateMailItemStatus(supabase: SupabaseClient, mailItemId: string, status: string)
-
-// Outreach Messages
-export async function getOutreachMessages(supabase: SupabaseClient, contactId?: string)
-export async function createOutreachMessage(supabase: SupabaseClient, data: Partial<OutreachMessage>)
-export async function markMessageResponded(supabase: SupabaseClient, messageId: string)
-
-// Message Templates
-export async function getMessageTemplates(supabase: SupabaseClient)
-export async function getDefaultTemplates(supabase: SupabaseClient)
-```
-
-#### Task 4: API Routes (10-15 min)
-**Files to create:**
-
-1. `app/api/contacts/route.ts` - GET all, POST new
-2. `app/api/contacts/[id]/route.ts` - GET, PUT, DELETE one
-3. `app/api/mail-items/route.ts` - GET all, POST new
-4. `app/api/mail-items/[id]/route.ts` - PUT status
-5. `app/api/messages/route.ts` - POST send message
-6. `app/api/templates/route.ts` - GET templates
-
-**Key API endpoints:**
-- `POST /api/contacts` - Create new contact
-- `GET /api/contacts` - List all contacts
-- `POST /api/mail-items` - Log new mail/package
-- `POST /api/messages` - Send outreach message
-- `GET /api/templates` - Get message templates
-
-#### Task 5: Seed Data (5 min)
-**File to modify:** `supabase/seed.sql`
-
-Add default message templates:
-```sql
-INSERT INTO message_templates (user_id, template_name, template_type, subject_line, message_body, is_default) VALUES
-(NULL, 'Mail Received', 'Initial', 'You have mail at Mei Way Mail Plus', 
-'Hi {{contact_name}}, You have {{item_type}} ready for pickup at Mei Way Mail Plus. Please come by during business hours. Thank you!', TRUE),
-
-(NULL, 'Pickup Reminder', 'Reminder', 'Reminder: Mail waiting for pickup',
-'Hi {{contact_name}}, This is a friendly reminder that you have {{item_type}} waiting for pickup. Please collect it at your earliest convenience. Thank you!', TRUE),
-
-(NULL, 'Pickup Confirmed', 'Confirmation', 'Thank you for picking up your mail',
-'Hi {{contact_name}}, Thank you for picking up your {{item_type}}. Have a great day!', TRUE);
-```
+#### ✅ Task 5: Sample Data (COMPLETE - see below)
+**Ready to load:** Default templates and sample contacts provided
 
 ---
 
