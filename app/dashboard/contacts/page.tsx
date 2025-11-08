@@ -9,6 +9,7 @@ export default function ContactsPage() {
   const router = useRouter();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
 
@@ -21,10 +22,20 @@ export default function ContactsPage() {
       const response = await fetch('/api/contacts');
       if (response.ok) {
         const data = await response.json();
-        setContacts(data);
+        console.log('Contacts API response:', data); // Debug log
+        // Ensure data is an array
+        setContacts(Array.isArray(data) ? data : []);
+        setError('');
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to load contacts:', response.status, errorText);
+        setError(`Failed to load contacts: ${response.status}`);
+        setContacts([]);
       }
     } catch (err) {
       console.error('Error loading contacts:', err);
+      setError('Error loading contacts. Please try again.');
+      setContacts([]);
     } finally {
       setLoading(false);
     }
@@ -76,6 +87,20 @@ export default function ContactsPage() {
           + New Contact
         </Button>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6 mb-8">
+          <h3 className="text-red-400 font-bold mb-2">✕ Error</h3>
+          <p className="text-zinc-300">{error}</p>
+          <button 
+            onClick={loadContacts}
+            className="mt-4 text-sm text-red-400 hover:text-red-300 underline"
+          >
+            Try again
+          </button>
+        </div>
+      )}
 
       {/* Search and Filter */}
       <div className="flex gap-4 mb-6">
